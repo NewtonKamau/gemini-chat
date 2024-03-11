@@ -2,7 +2,7 @@ import { useState } from "react";
 
 const App = () => {
   const [value, setValue] = useState("");
-  const [error, setEror] = useState("");
+  const [error, setError] = useState("");
   const [chatHistory, setChatHistory] = useState([]);
   const surpriseOptions = [
     "Who won the latest nobel peace prize?",
@@ -17,7 +17,7 @@ const App = () => {
   }
   const getResponse = async () => { 
     if(!value) {
-      setEror("Please ask a question");
+      setError("Please ask a question");
       return;
     }
     try {
@@ -33,12 +33,26 @@ const App = () => {
       }
       const response = await fetch('http://localhost:8000/gemini', options)
       const data = await response.text();
-      console.log(data);
+      setChatHistory(oldChatHistory => [...oldChatHistory, {
+        role: "user",
+        parts: value
+      },
+        {
+          role: "model",
+          parts:data 
+        }
+      ])
+      setValue("");
       
     } catch (error) {
-      setEror(error.message);
+      setError(error.message);
       return;
     }
+  }
+  const clear = () => {
+    setError("");
+    setValue("");
+    setChatHistory([]);
   }
    return (
     <div className="app">
@@ -49,13 +63,13 @@ const App = () => {
            onChange={ (e)=>setValue(e.target.value) }
          />
           {!error && <button onClick={getResponse}>Ask me</button>}
-          {error && <button>Clear</button>}
+          {error && <button onClick={clear}>Clear</button>}
          </div>
          {error && <p>{error}</p>}
          <div className="search-result">
-           <div key={""}>
-             <p className="answer"></p>
-           </div>
+         {chatHistory.map((chatItem,_index)=><div key={_index}>
+           <p className="answer">{chatItem.parts}</p>
+         </div>)}
          </div>     
     </div>
   );
